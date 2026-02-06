@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🪖 База Поранених — Рокіт</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0b0b0b; color: white; padding: 15px; max-width: 850px; margin: auto; -webkit-overflow-scrolling: touch; }
+        .card { background: #1c1c1c; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
+        input, select, button, textarea { width: 100%; padding: 14px; margin: 6px 0; font-size: 16px; border-radius: 10px; border: none; box-sizing: border-box; -webkit-appearance: none; }
+        textarea { height: 110px; background: #2a2a2a; color: white; resize: none; }
+        label { font-size: 14px; color: #aaa; margin-top: 10px; display: block; }
+        
+        button, .collapsible { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: 0.2s; min-height: 50px; font-weight: bold; }
+        button:active { transform: scale(0.98); opacity: 0.8; }
+
+        .pri-пріоритетний { background: #c0392b !important; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .pri-терміновий { background: #f1c40f !important; color: black; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .pri-звичайний { background: #7f8c8d !important; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+
+        .collapsible { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #444; margin-bottom: 10px; }
+        .collapsible h3 { margin: 0; font-size: 18px; color: #0055ff; }
+        .hidden { display: none; }
+
+        .save-btn { background: #0055ff; color: white; }
+        .folder-btn { background: #ff9900; color: black; }
+        .quick-btn { background: #e74c3c; color: white; border: 2px solid #ff4444; }
+        .view-btn { background: #27ae60; color: white; }
+        .anal-btn { background: #3498db; color: white; }
+        .support-btn { background: #2c3e50; color: white; border: 1px solid #34495e; }
+        
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .green { background: #00ff66; } .red { background: #ff4444; }
+        
+        li { background: #2a2a2a; margin: 8px 0; padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 12px; border: 1px solid #333; }
+        .item-main { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .item-actions { display: flex; gap: 6px; width: 100%; justify-content: flex-end; border-top: 1px solid #444; padding-top: 10px; flex-wrap: wrap; }
+        .action-btn { width: auto; padding: 8px 12px; margin: 0; font-size: 13px; flex: 1; border-radius: 8px; min-height: 44px; border: none; }
+        
+        .pdf-btn { background: #ffffff !important; color: #000 !important; }
+        .json-share-btn { background: #2c3e50 !important; color: #fff !important; }
+        .edit-btn { background: #f1c40f !important; color: #000 !important; }
+        .del-btn { background: #c0392b !important; color: #fff !important; }
+        
+        .media-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .media-grid img, .media-grid video { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #444; }
+
+        .detail-line { margin: 6px 0; border-bottom: 1px solid #333; padding-bottom: 4px; color: #ccc; font-size: 13px; }
+        .detail-line b { color: #fff; width: 180px; display: inline-block; }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .stat-box { background: #2a2a2a; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #444; }
+        .stat-num { font-size: 24px; font-weight: bold; color: #0055ff; display: block; }
+        .stat-label { font-size: 12px; color: #aaa; }
+        
+        .home-btn { background: #444; color: white; margin-bottom: 15px; }
+        .row-flex { display: flex; gap: 10px; align-items: flex-end; }
+    </style>
+</head>
+<body>
+
+<h2>🪖 База Поранених</h2>
+
+<div class="card" id="startMenu">
+    <div class="row">
+        <button class="folder-btn" onclick="initFolder()">📂 Адміністрування</button>
+        <button class="quick-btn" onclick="openQuickMode()">📸 Швидка фотокартка</button>
+    </div>
+    <button class="view-btn" onclick="document.getElementById('fileViewer').click()">👁️ Швидкий перегляд файлу (JSON)</button>
+    <button class="anal-btn" onclick="handleAnalClick()">📊 Аналітика та Звіти</button>
+    <button class="support-btn" onclick="toggleSupport()">🛠️ Тех підтримка</button>
+    
+    <input type="file" id="fileViewer" class="hidden" accept=".json" onchange="quickViewFile(event)">
+    <div style="text-align: center; color: #555; font-size: 14px; margin-top: 10px; font-style: italic;">Автор — Рокіт</div>
+</div>
+
+<div id="supportArea" class="card hidden">
+    <button class="home-btn" onclick="toggleSupport()">❌ Закрити</button>
+    <div style="text-align: center; padding: 20px;">
+        <h3>📞 Технічна підтримка</h3>
+        <p>Рокіт</p>
+        <a href="tel:+380683368105" style="color:#0055ff; font-size:20px; text-decoration:none; font-weight:bold;">📱 +380683368105</a>
+    </div>
+</div>
+
+<div id="analyticsArea" class="hidden">
+    <button class="home-btn" onclick="toggleAnalytics()">❌ Закрити Аналітику</button>
+    <div class="card">
+        <h3>📈 Поточна Статистика</h3>
+        <div class="stat-grid">
+            <div class="stat-box"><span class="stat-num" id="statTotal">0</span><span class="stat-label">Всього</span></div>
+            <div class="stat-box"><span class="stat-num" id="statActive" style="color:#00ff66">0</span><span class="stat-label">Активні</span></div>
+            <div class="stat-box"><span class="stat-num" id="statPriority" style="color:#ff4444">0</span><span class="stat-label">Пріоритет</span></div>
+            <div class="stat-box"><span class="stat-num" id="statUrgent" style="color:#f1c40f">0</span><span class="stat-label">Терміново</span></div>
+        </div>
+
+        <div class="card" style="background:#222; border:1px solid #444; margin-top:15px">
+            <h3>📅 Сформувати звіт за період</h3>
+            <div class="row-flex">
+                <div style="flex:1"><label>З (дата та час):</label><input type="date" id="reportDateStart"><input type="time" id="reportTimeStart" value="00:00"></div>
+                <div style="flex:1"><label>По (дата та час):</label><input type="date" id="reportDateEnd"><input type="time" id="reportTimeEnd" value="23:59"></div>
+            </div>
+            <button class="pdf-btn" style="background:#fff; color:#000; margin-top:15px; font-weight:bold" onclick="generateDailyPDFReport()">📄 Згенерувати PDF Таблицю</button>
+        </div>
+    </div>
+</div>
+
+<div id="mainInterface" class="hidden">
+    <button class="home-btn" onclick="goHome()">🏠 На головну</button>
+
+    <div class="card" id="formContainer">
+        <div class="collapsible" onclick="toggleSec('formArea')">
+            <h3 id="formTitle">📝 Нова картка</h3>
+            <span>▼</span>
+        </div>
+        <div id="formArea">
+            <input id="pib" placeholder="ПІБ">
+            <input id="call" placeholder="Позивний">
+            <input id="unit" placeholder="Підрозділ">
+            <input id="rank" placeholder="Звання">
+            <input id="tagId" placeholder="Номер жетону">
+            <input id="position" placeholder="Посада">
+            <div class="row"><label style="align-self:center; font-size:14px">Дата народження:</label><input id="birthDate" type="date"></div>
+            <input id="phone" placeholder="Номер телефону">
+            <input id="location" placeholder="Місце знаходження пацієнта">
+            <select id="severity">
+                <option value="" disabled selected>Категорія потерпілого</option>
+                <option value="звичайний">⚪ звичайний</option>
+                <option value="терміновий">🟡 терміновий</option>
+                <option value="пріоритетний">🔴 пріоритетний</option>
+            </select>
+            <div class="row"><label style="font-size:12px; color:#aaa;">Дата отримання поранення:</label><input id="date" type="date"></div>
+            <div class="row"><label style="font-size:12px; color:#aaa;">Час отримання поранення:</label><input id="time" type="time"></div>
+            <input id="woundLocation" placeholder="Місце отримання поранення">
+            <textarea id="circumstances" placeholder="Обставини"></textarea>
+            <textarea id="complaints" placeholder="Скарги"></textarea>
+            <textarea id="help" placeholder="Надана допомога"></textarea>
+            <textarea id="medic" placeholder="Допомогу надав (Прізвище/Позивний)"></textarea>
+            <textarea id="vitals" placeholder="Життєві показники">Свідомість -&#10;Тиск -&#10;Пульс -&#10;Сатурація -&#10;Частота дихання -</textarea>
+            <input id="finalDiag" placeholder="Попередній діагноз">
+            <select id="status"><option value="active">🟢 Активно</option><option value="inactive">🔴 Не активно</option></select>
+            
+            <label style="font-size:12px; color:#aaa;">Медіа (фото/відео):</label>
+            <input id="media" type="file" accept="image/*,video/*" multiple>
+            
+            <div class="row">
+                <button class="save-btn" id="btnFileSave" style="display:none" onclick="saveData()">💾 Зберегти у папку</button>
+                <button class="quick-btn" id="btnCacheSave" style="display:none" onclick="saveQuickData()">⚡ Зберегти у кеш</button>
+            </div>
+            <button id="btnCancelEdit" class="hidden" onclick="cancelEdit()" style="background:#444">Скасувати</button>
+        </div>
+    </div>
+
+    <div id="folderSearchUI" class="hidden">
+        <div id="searchBlock" class="card">
+            <div class="collapsible" onclick="toggleSec('filterArea')">
+                <h3>🔍 Пошук та Фільтри</h3>
+                <span>▼</span>
+            </div>
+            <div id="filterArea">
+                <input id="searchPIB" placeholder="Пошук ПІБ / Позивний..." oninput="render()">
+                <div class="row">
+                    <select id="fStatus" onchange="render()"><option value="">Усі статуси</option><option value="active">Активно</option><option value="inactive">Архів</option></select>
+                    <select id="fSeverity" onchange="render()"><option value="">Усі категорії</option><option value="звичайний">Звичайний</option><option value="терміновий">Терміновий</option><option value="пріоритетний">Пріоритетний</option></select>
+                </div>
+                <div class="row"><label style="align-self:center; font-size:14px">Дата поранення:</label><input id="fDate" type="date" onchange="render()"></div>
+                <input id="searchLoc" placeholder="Пошук за місцем пацієнта..." oninput="render()">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 id="listTitle">📋 Список</h3>
+        <ul id="mainListArea" style="padding:0;list-style:none"></ul>
+    </div>
+</div>
+
+<div id="details" class="card hidden"></div>
+
+<script>
+let directoryHandle = null, cards = [], quickCards = JSON.parse(localStorage.getItem('quick_med_data') || '[]');
+let editFileName = null, editQuickIndex = null, myCharts = {};
+const fields = ['pib','call','unit','rank','tagId','position','birthDate','phone','location','severity','date','time','woundLocation','circumstances','complaints','help','medic','vitals','finalDiag','status'];
+
+const langMap = { 
+    pib: {uk:"ПІБ", en:"Full Name"}, call: {uk:"Позивний", en:"Callsign"}, unit: {uk:"Підрозділ", en:"Unit"}, rank: {uk:"Звання", en:"Rank"}, tagId: {uk:"Жетон", en:"ID Tag Number"}, position: {uk:"Посада", en:"Position"}, birthDate: {uk:"Дата народження", en:"Date of Birth"}, phone: {uk:"Тел", en:"Phone Number"}, location: {uk:"Місце знаходження пацієнта", en:"Patient Location"}, severity: {uk:"Категорія", en:"Triage Category"}, date: {uk:"Дата отримання поранення", en:"Date of Injury"}, time: {uk:"Час отримання поранення", en:"Time of Injury"}, woundLocation: {uk:"Місце отримання поранення", en:"Place of Injury"}, circumstances: {uk:"Обставини", en:"Circumstances"}, complaints: {uk:"Скарги", en:"Complaints"}, help: {uk:"Надана допомога", en:"Treatment"}, medic: {uk:"Допомогу надав", en:"Medic/Provider"}, vitals: {uk:"Показники", en:"Vital Signs"}, finalDiag: {uk:"Попередній діагноз", en:"Preliminary Diagnosis"}, status: {uk:"Статус", en:"Status"} 
+};
+
+function formatDate(val) { if(!val) return "---"; const [y, m, d] = val.split('-'); return `${d}.${m}.${y}`; }
+function toggleSec(id) { document.getElementById(id).classList.toggle('hidden'); }
+function goHome() { location.reload(); }
+function toggleSupport() { document.getElementById('supportArea').classList.toggle('hidden'); document.getElementById('startMenu').classList.toggle('hidden'); }
+
+async function handleAnalClick() { try { directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' }); await loadFiles(); toggleAnalytics(); } catch(e){} }
+function toggleAnalytics() { 
+    document.getElementById('analyticsArea').classList.toggle('hidden'); 
+    document.getElementById('startMenu').classList.toggle('hidden'); 
+    if(!document.getElementById('analyticsArea').classList.contains('hidden')) {
+        calculateStats();
+        const now = new Date().toISOString().split('T')[0];
+        document.getElementById('reportDateStart').value = now;
+        document.getElementById('reportDateEnd').value = now;
+    }
+}
+
+function calculateStats() {
+    const d = cards;
+    document.getElementById('statTotal').innerText = d.length;
+    document.getElementById('statActive').innerText = d.filter(c => c.status==='active').length;
+    document.getElementById('statPriority').innerText = d.filter(c => c.severity==='пріоритетний').length;
+    document.getElementById('statUrgent').innerText = d.filter(c => c.severity==='терміновий').length;
+}
+
+async function initFolder() {
+    try {
+        directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        document.getElementById('startMenu').classList.add('hidden');
+        document.getElementById('mainInterface').classList.remove('hidden');
+        document.getElementById('btnFileSave').style.display = 'block';
+        document.getElementById('folderSearchUI').classList.remove('hidden');
+        document.getElementById('listTitle').innerText = "📋 Список бази (Адміністрування)";
+        await loadFiles(); render();
+    } catch(e){}
+}
+
+async function loadFiles() {
+    cards = []; if(!directoryHandle) return;
+    for await (const entry of directoryHandle.values()) {
+        if(entry.name.endsWith('.json')) { const f = await entry.getFile(); try { let d = JSON.parse(await f.text()); d._fileName = entry.name; cards.push(d); } catch(e){} }
+    }
+}
+
+async function saveData() {
+    const d = await getFormData();
+    const name = editFileName || `${d.call || d.pib || 'Med'}-${Date.now()}.json`;
+    const h = await directoryHandle.getFileHandle(name, {create:true});
+    const w = await h.createWritable(); await w.write(JSON.stringify(d, null, 2)); await w.close();
+    cancelEdit(); await loadFiles(); render();
+}
+
+async function getFormData() {
+    let d = {}; fields.forEach(f => d[f] = document.getElementById(f).value);
+    const files = document.getElementById('media').files;
+    if(files.length) d.media = await Promise.all(Array.from(files).map(f => new Promise(r => { const rd = new FileReader(); rd.onload = () => r({data:rd.result, type:f.type}); rd.readAsDataURL(f); })));
+    else { d.media = d.media || []; }
+    return d;
+}
+
+function render(isQuick = false) {
+    const list = document.getElementById('mainListArea'); list.innerHTML = "";
+    const dataSrc = isQuick ? quickCards : cards;
+    const fS = document.getElementById('fStatus').value, fV = document.getElementById('fSeverity').value, fP = document.getElementById('searchPIB').value.toLowerCase(), fD = document.getElementById('fDate').value, fL = document.getElementById('searchLoc').value.toLowerCase();
+    
+    dataSrc.filter(d => {
+        if(isQuick) return true;
+        return (!fS || d.status === fS) && (!fV || d.severity === fV) && (!fP || (d.pib+d.call).toLowerCase().includes(fP)) && (!fD || d.date === fD) && (!fL || (d.location||'').toLowerCase().includes(fL));
+    }).sort((a,b)=>new Date(b.date+' '+b.time)-new Date(a.date+' '+a.time)).forEach((d, i) => {
+        const li = document.createElement('li'); const realIdx = dataSrc.indexOf(d);
+        li.innerHTML = `<div class="item-main" onclick="showDetails(${realIdx}, ${isQuick})"><span><span class="status-dot ${d.status==='active'?'green':'red'}"></span><b>${d.call||d.pib||'---'}</b></span><span class="pri-${d.severity}">${d.severity||''}</span></div>
+        <div class="item-actions">
+            <button class="action-btn pdf-btn" onclick="printPDF(${realIdx}, ${isQuick})">🖨️ PDF</button>
+            <button class="action-btn json-share-btn" onclick="shareAsJSON(${realIdx}, ${isQuick})">📄 JSON</button>
+            <button class="action-btn edit-btn" onclick="editCard(${realIdx}, ${isQuick})">✏️</button>
+            <button class="action-btn del-btn" onclick="${isQuick ? 'deleteQuick' : 'deleteCard'}(${realIdx})">🗑️</button>
+        </div>`;
+        list.appendChild(li);
+    });
+}
+
+async function shareAsJSON(i, isQ) { 
+    const d = isQ ? quickCards[i] : cards[i]; 
+    const blob = new Blob([JSON.stringify(d, null, 2)], {type:'application/json'}); 
+    const file = new File([blob], `${d.call || 'med'}.json`, {type:'application/json'}); 
+    if(navigator.share) try { await navigator.share({files:[file]}); return; } catch(e){}
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${d.call || 'med'}.json`; a.click();
+}
+
+function printPDF(i, isQ) {
+    const d = isQ ? quickCards[i] : cards[i]; const w = window.open();
+    let mediaHtml = "";
+    if (d.media && d.media.length > 0) {
+        mediaHtml = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">`;
+        d.media.forEach(m => { if(m.type.includes('image')) mediaHtml += `<img src="${m.data}" style="width:100%; border:1px solid #000; height:200px; object-fit:cover;">`; });
+        mediaHtml += `</div>`;
+    }
+    
+    let c = `<html><head><style>
+        body{font-family:Arial;padding:40px; color:#000; line-height:1.4;} 
+        .header { margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 10px; }
+        .l{border-bottom:1px solid #ccc;padding:6px 0; font-size:11pt;} 
+        .uk { font-weight: bold; }
+        .en { font-size: 9pt; font-style: italic; color: #444; margin-left: 5px; }
+        h1{margin: 0; font-size: 20pt; font-weight: bold;} 
+        .stamp{margin-top:30px; text-align:right; font-style:italic; font-size:9pt;}
+    </style></head><body>
+    <div class="header"><h1>КАРТКА ПОРАНЕНОГО<br><span style="font-size:14pt; font-style:italic; font-weight:normal;">CASUALTY CARD</span></h1></div>
+    <h3 style="margin-bottom:15px;">${d.pib || '____________________'} ${d.call ? '('+d.call+')' : ''}</h3>`;
+    
+    fields.forEach(f => { 
+        let val = d[f] || '---'; 
+        if(f === 'date' || f === 'birthDate') val = formatDate(d[f]); 
+        c += `<div class="l"><span class="uk">${langMap[f].uk}:</span> <span class="en">/ ${langMap[f].en}</span><br>${val}</div>`; 
+    });
+    
+    c += mediaHtml + `<div class="stamp">Допомогу надав: ${d.medic || '___________'}<br>Дата створення: ${new Date().toLocaleString()}</div>`;
+    w.document.write(c + `<script>window.onload=()=> {window.print();window.close();}<\/script></body></html>`); w.document.close();
+}
+
+function generateDailyPDFReport() {
+    const dStart = document.getElementById('reportDateStart').value;
+    const tStart = document.getElementById('reportTimeStart').value;
+    const dEnd = document.getElementById('reportDateEnd').value;
+    const tEnd = document.getElementById('reportTimeEnd').value;
+
+    if(!dStart || !dEnd) { alert("Будь ласка, виберіть початкову та кінцеву дати."); return; }
+
+    const fullStart = new Date(`${dStart}T${tStart}`);
+    const fullEnd = new Date(`${dEnd}T${tEnd}`);
+
+    const filtered = cards.filter(c => {
+        const cDate = new Date(`${c.date}T${c.time}`);
+        return cDate >= fullStart && cDate <= fullEnd;
+    });
+
+    if(!filtered.length) { alert("За вказаний період записів не знайдено."); return; }
+    
+    const w = window.open();
+    let h = `<html><head><style>
+        @page { size: landscape; margin: 5mm; } 
+        body{font-family:Arial;padding:5px;font-size:6.5pt; color:#000;} 
+        .header-rep { border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom:10px;}
+        table{width:100%; border-collapse:collapse; table-layout: auto;} 
+        th,td{border:1px solid #000; padding:2px; text-align:left; word-wrap: break-word;} 
+        th{background:#eee; font-weight:bold; text-align:center;} 
+        .pri-пріоритетний{color:red; font-weight:bold;}
+    </style></head><body>
+    <div class="header-rep">
+        <h1 style="margin:0; font-size:12pt;">ЗВІТ ПО ПОРАНЕНИМ ЗА ПЕРІОД</h1>
+        <p style="margin:0; font-size:9pt;">Період: ${formatDate(dStart)} ${tStart} — ${formatDate(dEnd)} ${tEnd}</p>
+    </div>`;
+    
+    h += `<table><thead><tr><th>Дата/Час поранення</th><th style="min-width:60px">ПІБ / Позивний</th><th>Звання / Підр.</th><th>Кат.</th><th style="width:15%">Скарги / Попередній діагноз</th><th style="width:15%">Місце поранення / Обставини</th><th>Показники</th><th style="width:15%">Допомога</th><th>Медик</th><th>Зараз</th></tr></thead><tbody>`;
+    filtered.forEach(x => { h += `<tr><td>${formatDate(x.date)}<br>${x.time}</td><td>${x.pib}<br><b>${x.call||''}</b></td><td>${x.rank || ''}<br>${x.unit || ''}</td><td class="pri-${x.severity}">${x.severity}</td><td>${x.complaints}<br><i>${x.finalDiag || ''}</i></td><td><b>${x.woundLocation || ''}</b><br>${x.circumstances || ''}</td><td>${x.vitals.replace(/\n/g, ' ')}</td><td>${x.help}</td><td>${x.medic || ''}</td><td>${x.location || ''}</td></tr>`; });
+    h += `</tbody></table><script>window.onload=()=> {window.print();window.close();}<\/script></body></html>`;
+    w.document.write(h); w.document.close();
+}
+
+function showDetails(i, isQ, isDirect = false) {
+    const d = isDirect ? i : (isQ ? quickCards[i] : cards[i]);
+    const b = document.getElementById('details'); b.classList.remove('hidden');
+    let m = '<div class="media-grid">'; (d.media||[]).forEach(x => m += x.type.includes('video') ? `<video controls src="${x.data}"></video>` : `<img src="${x.data}">`);
+    let content = `<h3>${d.pib||d.call}</h3>`;
+    fields.forEach(f => { let val = d[f] || ''; if(f === 'date' || f === 'birthDate') val = formatDate(d[f]); content += `<div class="detail-line"><b>${langMap[f].uk}:</b> ${val}</div>`; });
+    b.innerHTML = content + m + `</div><button class="action-btn del-btn" onclick="this.parentElement.parentElement.classList.add('hidden')">Закрити</button>`;
+    b.scrollIntoView({behavior:'smooth'});
+}
+
+function openQuickMode() { document.getElementById('startMenu').classList.add('hidden'); document.getElementById('mainInterface').classList.remove('hidden'); document.getElementById('btnCacheSave').style.display='block'; document.getElementById('folderSearchUI').classList.add('hidden'); document.getElementById('listTitle').innerText = "📋 Список (Кеш браузера)"; const now = new Date(); document.getElementById('date').valueAsDate = now; document.getElementById('time').value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0'); render(true); }
+function deleteQuick(i) { if(confirm("Видалити з кешу?")) { quickCards.splice(i,1); localStorage.setItem('quick_med_data', JSON.stringify(quickCards)); render(true); } }
+async function deleteCard(i) { if(confirm("Видалити?")) { await directoryHandle.removeEntry(cards[i]._fileName); await loadFiles(); render(); } }
+function editCard(i, isQ) { const d = isQ ? quickCards[i] : cards[i]; if(isQ) editQuickIndex=i; else editFileName=d._fileName; fields.forEach(f=>document.getElementById(f).value=d[f]||""); document.getElementById('formArea').classList.remove('hidden'); window.scrollTo(0,0); }
+function cancelEdit() { editFileName=null; editQuickIndex=null; fields.forEach(f=>document.getElementById(f).value=""); document.getElementById('vitals').value = "Свідомість -\nТиск -\nПульс -\nСатурація -\nЧастота дихання -"; }
+async function saveQuickData() { const d = await getFormData(); if(editQuickIndex!==null) quickCards[editQuickIndex]=d; else quickCards.unshift(d); localStorage.setItem('quick_med_data', JSON.stringify(quickCards)); cancelEdit(); render(true); alert("Збережено в Кеш"); }
+function quickViewFile(e) { const f = e.target.files[0]; const r = new FileReader(); r.onload=ev=>showDetails(JSON.parse(ev.target.result), false, true); r.readAsText(f); }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+</body>
+</html>
