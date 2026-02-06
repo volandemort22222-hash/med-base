@@ -1,0 +1,16 @@
+{
+  "short_name": "Рокіт",
+  "name": "База Поранених — Рокіт",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1022/1022484.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0b0b0b",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#0055ff"
+}
